@@ -1,0 +1,20 @@
+name: Build Desktop Apps
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install customtkinter pymupdf google-genai pydantic pyinstaller
+      - run: pyinstaller --noconfirm --onefile --windowed --name "TranslationTrainer" --collect-all customtkinter translation_trainer_gui.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TranslationTrainer-${{ matrix.os }}
+          path: dist/
