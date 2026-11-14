@@ -31,10 +31,10 @@ class SettingsWindow(ctk.CTkToplevel):
         self._busy = False
 
         self.title("Settings & Local Backend Setup")
-        self.geometry("540x520")
+        self.geometry("540x530")
         self.resizable(False, False)
         self.transient(parent)
-        self.grab_set()
+        self.after(50, self._focus_modal)
 
         self.grid_columnconfigure(0, weight=1)
 
@@ -147,6 +147,14 @@ class SettingsWindow(ctk.CTkToplevel):
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self._update_provider_hints()
         self.refresh_diagnostics()
+
+    def _focus_modal(self) -> None:
+        try:
+            self.lift()
+            self.focus_force()
+            self.grab_set()
+        except Exception:
+            pass
 
     def _update_provider_hints(self) -> None:
         if self.provider_var.get() == "Ollama":

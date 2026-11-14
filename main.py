@@ -31,7 +31,7 @@ class TranslationTrainerApp(ctk.CTk):
         ctk.set_appearance_mode("System")
         ctk.set_default_color_theme("blue")
 
-        self.title("PDF Translation Trainer")
+        self.title("PDF Translation Trainer — Local AI")
         self.geometry("860x720")
         self.minsize(720, 600)
 
@@ -39,10 +39,18 @@ class TranslationTrainerApp(ctk.CTk):
         self.progress_path: Path | None = None
         self.state: dict = {"current_index": 0, "sentences": [], "history": {}}
         self.config_data = load_config()
+        self._settings_win: SettingsWindow | None = None
 
         self._build_ui()
         self._restore_last_session()
         self._ensure_ready_and_warmup()
+
+    def open_settings(self) -> None:
+        if self._settings_win is not None and self._settings_win.winfo_exists():
+            self._settings_win.lift()
+            self._settings_win.focus_force()
+            return
+        self._settings_win = SettingsWindow(self)
 
     def _persist_config(self) -> None:
         self.config_data["src"] = self.src_entry.get().strip()
@@ -87,7 +95,7 @@ class TranslationTrainerApp(ctk.CTk):
                 if not is_server_running("Ollama", host):
                     binary = find_ollama_binary()
                     if not binary:
-                        self.after(300, lambda: SettingsWindow(self))
+                        self.after(300, self.open_settings)
                         return
                     start_ollama_server(binary)
                     for _ in range(20):
@@ -101,7 +109,7 @@ class TranslationTrainerApp(ctk.CTk):
                     if lms_cli:
                         start_lmstudio_server(lms_cli, None)
                     else:
-                        self.after(300, lambda: SettingsWindow(self))
+                        self.after(300, self.open_settings)
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -130,8 +138,8 @@ class TranslationTrainerApp(ctk.CTk):
         self.settings_btn = ctk.CTkButton(
             top_frame,
             text="⚙ Settings",
-            command=lambda: SettingsWindow(self),
-            width=100,
+            command=self.open_settings,
+            width=105,
             fg_color="gray35",
             hover_color="gray25",
         )
